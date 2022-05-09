@@ -1,13 +1,35 @@
-//jshint esversion:6
+//Express
 const express = require('express');
-const bodyParser = require('body-parser');
-const ejs = require('ejs');
-
 const app = express();
 const port = 3000;
-app.set('view engine', 'ejs');
+//Body Parser
+const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true}));
+//EJS
+const ejs = require('ejs');
+app.set('view engine', 'ejs');
+//Mongoose
+const mogoose = require('mongoose');
+const { default: mongoose } = require('mongoose');
+mongoose.connect('mongodb://localhost:27017/userDB');
+
 app.use(express.static(__dirname + '/public'));
+
+const userSchema = new mongoose.Schema({
+    email: String,
+    password: String
+});
+
+const User = new mongoose.model('User', userSchema);
+
+
+
+
+
+
+
+
+
 
 
 app.get('/', function(req, res) {
@@ -28,5 +50,5 @@ app.get('/register', function(req, res) {
 
 
 app.listen(port, function(req, res) {
-    console.log('Server running on port 3000.');
+    console.log('Server started on port 3000.');
 });
