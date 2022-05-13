@@ -19,6 +19,10 @@ const session = require('express-session');
 const passport = require('passport');
 const passportLocalMongoose = require('passport-local-mongoose');
 const { authenticate } = require('passport/lib');
+//Google Strategy
+var GoogleStrategy = require('passport-google-oauth20').Strategy;
+//Mongoose-findOrCreate
+var findOrCreate = require('mongoose-findorcreate');
 
 //Use static CSS sheet
 app.use(express.static(__dirname + '/public'));
@@ -44,12 +48,29 @@ const userSchema = new mongoose.Schema({
 //3. Hash and salt passwords with passport.
 userSchema.plugin(passportLocalMongoose);
 
+userSchema.plugin(findOrCreate);
+
 const User = new mongoose.model('User', userSchema);
 
 //4. Serialize-Deserialize cookies.
 passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
+
+//GoogleStrategy - SetUp
+passport.use(new GoogleStrategy({
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/google/secrets",
+    //Add another end point, because of Google Plus API deprecation
+    userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    User.findOrCreate({ googleId: profile.id }, function (err, user) {
+      return cb(err, user);
+    });
+  }
+));
 
 //---ROUTS---///
 app.get('/', function(req, res) {
