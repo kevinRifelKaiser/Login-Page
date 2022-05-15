@@ -62,10 +62,12 @@ passport.use(new GoogleStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     callbackURL: "http://localhost:3000/auth/google/secrets",
-    //Add another end point, because of Google Plus API deprecation
+    //Add another end point, because of Google Plus API deprecation --> https://github.com/jaredhanson/passport-google-oauth2/pull/51
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
   },
   function(accessToken, refreshToken, profile, cb) {
+    //findOrCreate no es una función de passport, si no que es creada para este caso, tenemos que importar el módulo para poder usarla
+    console.log(profile);
     User.findOrCreate({ googleId: profile.id }, function (err, user) {
       return cb(err, user);
     });
@@ -76,6 +78,19 @@ passport.use(new GoogleStrategy({
 app.get('/', function(req, res) {
     res.render('home');
 });
+
+app.get('/auth/google',
+    //Google strategy
+    passport.authenticate('google', { scope: ['profile'] })
+);
+
+app.get('/auth/google/secrets', 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+    // Successful authentication, redirect secrets page.
+    res.redirect('/secrets');
+  }
+);
 
 app.get('/register', function(req, res) {
     res.render('register');
@@ -125,6 +140,7 @@ app.post('/login', function(req, res) {
         if(err) {
             console.log(err);
         } else {
+            //Local strategy
             passport.authenticate('local')(req, res, function() {
                 res.redirect('/secrets');
             });
