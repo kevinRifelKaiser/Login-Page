@@ -42,7 +42,9 @@ mongoose.connect('mongodb://localhost:27017/userDB');
 //Mongoose Schema and Model.
 const userSchema = new mongoose.Schema({
     email: String,
-    password: String
+    password: String,
+    //Agregamos el campo googleId para poder usearlo en la función findOrCreate.
+    googleId: String
 });
 
 //3. Hash and salt passwords with passport.
