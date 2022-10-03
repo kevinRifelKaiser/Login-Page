@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { userSchema } from './db.js';
-import { SECRET, CLIENT_ID, CLIENT_SECRET } from './config.js';
+import { PORT, SECRET, CLIENT_ID, CLIENT_SECRET } from './config.js';
 
 //environment variables
 import * as dotenv from 'dotenv'
@@ -189,6 +189,6 @@ app.post('/submit', function(req, res) {
 });
 
 
-app.listen(port, function(req, res) {
-    console.log('Server started on port 3000.');
+app.listen(PORT, function(req, res) {
+    console.log('Server started on port ' + PORT);
 });
