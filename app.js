@@ -1,31 +1,40 @@
+import mongoose from 'mongoose';
+import { userSchema } from './db.js';
+import { SECRET, CLIENT_ID, CLIENT_SECRET } from './config.js';
+
 //environment variables
-require('dotenv').config()
+import * as dotenv from 'dotenv'
+dotenv.config()
+
 //Express
-const express = require('express');
+import express from 'express';
 const app = express();
 const port = 3000;
+
 //Body Parser
-const bodyParser = require('body-parser');
+import bodyParser from 'body-parser';
+import path from 'path';
 app.use(bodyParser.urlencoded({extended: true}));
+
 //EJS
-const ejs = require('ejs');
+import ejs from 'ejs';
 app.set('view engine', 'ejs');
-//Mongoose
-const mogoose = require('mongoose');
-const { default: mongoose } = require('mongoose');
+
 //Express-Session
-const session = require('express-session');
+import session from 'express-session';
+
 //1st. Passport
-const passport = require('passport');
-const passportLocalMongoose = require('passport-local-mongoose');
-const { authenticate } = require('passport/lib');
+import passport from 'passport';
+import passportLocalMongoose from 'passport-local-mongoose';
+//import { authenticate } from 'passport';
+
 //Google Strategy
-var GoogleStrategy = require('passport-google-oauth20').Strategy;
-//Mongoose-findOrCreate
-var findOrCreate = require('mongoose-findorcreate');
+import gStrategy from 'passport-google-oauth20';
+const GoogleStrategy = gStrategy.Strategy;
 
 //Use static CSS sheet
-app.use(express.static(__dirname + '/public'));
+const __dirname = path.resolve();
+app.use(express.static(path.join(__dirname + '/public')));
 
 //2. Setting up initial session configurations
 app.use(session({
@@ -35,18 +44,6 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
-
-mongoose.connect('mongodb://localhost:27017/userDB');
-//mongoose.set('useCreateIndex', true);
-
-//Mongoose Schema and Model.
-const userSchema = new mongoose.Schema({
-    email: String,
-    password: String,
-    //Agregamos el campo googleId para poder usearlo en la función findOrCreate.
-    googleId: String,
-    secret: String
-});
 
 //3. Hash and salt passwords with passport.
 userSchema.plugin(passportLocalMongoose);
@@ -66,22 +63,25 @@ passport.deserializeUser(function(id, done) {
     });
 });
 
+//Mongoose-findOrCreate
+import findOrCreate from 'mongoose-findorcreate';
+
 //GoogleStrategy - SetUp
 passport.use(new GoogleStrategy({
-    clientID: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
+    clientID: CLIENT_ID,
+    clientSecret: CLIENT_SECRET,
     callbackURL: "http://localhost:3000/auth/google/secrets",
     //Add another end point, because of Google Plus API deprecation --> https://github.com/jaredhanson/passport-google-oauth2/pull/51
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
   },
   function(accessToken, refreshToken, profile, cb) {
-    //findOrCreate no es una función de passport, si no que es creada para este caso, tenemos que importar el módulo para poder usarla
     console.log(profile);
-    User.findOrCreate({ googleId: profile.id }, function (err, user) {
+    User.findOrCreate({username: profile.emails[0].value, googleId: profile.id }, function (err, user) {
       return cb(err, user);
     });
   }
 ));
+
 
 //---ROUTS---///
 app.get('/', function(req, res) {
@@ -90,7 +90,7 @@ app.get('/', function(req, res) {
 
 app.get('/auth/google',
     //Google strategy
-    passport.authenticate('google', { scope: ['profile'] })
+    passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 
 app.get('/auth/google/secrets', 
@@ -110,7 +110,7 @@ app.get('/login', function(req, res) {
 });
 
 app.get('/secrets', function(req, res) {
-    //buscamos todos los campos: 'secret' que no esten vacíos, o sea que no sean nulos, de la siguiente manera ($ne --> not equal):
+    //($ne --> not equal)
     User.find({'secrets':{$ne:null}}, function(err, foundUsers) {
         if(err) {
             console.log(err);
@@ -187,13 +187,6 @@ app.post('/submit', function(req, res) {
     });
 
 });
-
-
-
-
-
-
-
 
 
 app.listen(port, function(req, res) {
