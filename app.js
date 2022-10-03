@@ -70,7 +70,7 @@ import findOrCreate from 'mongoose-findorcreate';
 passport.use(new GoogleStrategy({
     clientID: CLIENT_ID,
     clientSecret: CLIENT_SECRET,
-    callbackURL: "http://localhost:3000/auth/google/secrets",
+    callbackURL: "https://login-page-production-389a.up.railway.app/auth/google/secrets",
     //Add another end point, because of Google Plus API deprecation --> https://github.com/jaredhanson/passport-google-oauth2/pull/51
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
   },
